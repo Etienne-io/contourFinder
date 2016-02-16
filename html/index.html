@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Contour finder</title>
+    <link rel="stylesheet" href="css/normalize.css">
+    <script src="../js/jquery-1.10.1.min.js" type="text/javascript"></script>
+    <script src="../js/finder.js" type="text/javascript"></script>
+    <script src="../bower_components/lodash/lodash.js"></script>
+    <script>
+
+        var image;
+        var imageCtx;
+        var logo
+        var foregroudColor = 0;
+        var backgroundColor = 255;
+        var threshold = 160; //arcade
+        threshold = 146 * 0.3 + 148 * 0.59 + 151 * 0.11;
+        threshold += 0.2;
+        threshold = 160;
+        console.log(threshold);
+
+        var contourFinder = new ContourFinder();
+        var startTime = 0;
+        var currentContour = 0;
+
+        $(document).ready(function() {
+            console.log("ready!");
+            image = document.getElementById('image');
+            imageCtx = image.getContext('2d');
+
+            fillImage();
+
+            $(document).click(onClick);
+            $(document).bind("touchstart", onClick);
+        });
+
+        function onClick(e) {
+            console.log(e.clientX, e.clientY);
+            startTime = Date.now();
+            contourFinder.findContours(image, foregroudColor, backgroundColor, threshold,e.clientX, e.clientY);
+
+            console.log("contourFinder.allContours.length): " + contourFinder.allContours.length);
+            var secs = (Date.now() - startTime) / 1000;
+            console.log("Finding contours took " + secs + "s");
+
+            //imageCtx.clearRect(0, 0, image.width, image.height);
+
+            drawContours();
+        }
+
+        function fillImage() {
+            //imageCtx.clearRect (0,0,image.width,image.height);
+            logo = new Image();
+            logo.onload = draw;
+            //logo.src = "../images/image1bis.png";
+            logo.src = "../images/image2.png";
+        }
+
+        function draw() {
+            imageCtx.drawImage(logo, 0, 0);
+        }
+
+        function drawContours() {
+            for (var i = 0; i < contourFinder.allContours.length; i++) {
+                //console.log("contour #" + i + " length: " + contourFinder.allContours[i].length);
+                imageCtx.strokeStyle = '#' + Math.floor(Math.random() * 16777215).toString(16);
+                drawContour(i);
+            }
+        }
+
+        function drawContour(index) {
+            //var points = contourFinder.allContours[index];
+            //var points = contourFinder.extremities;
+            var points = contourFinder.test;
+            if (points.length <= 0) return;
+
+            imageCtx.beginPath();
+            imageCtx.moveTo(points[0].x, points[0].y);
+            for (var i = 0; i < points.length; i++) {
+                imageCtx.lineTo(points[i].x, points[i].y);
+            }
+            imageCtx.stroke();
+            imageCtx.closePath();
+            var points = contourFinder.contour;
+            if (points.length <= 0) return;
+
+            imageCtx.beginPath();
+            imageCtx.moveTo(points[0].x, points[0].y);
+            for (var i = 0; i < points.length; i++) {
+                imageCtx.lineTo(points[i].x, points[i].y);
+            }
+            imageCtx.stroke();
+            imageCtx.closePath();
+        }
+    </script>
+</head>
+<body>
+<canvas id="image" width="3310" height="2420"></canvas>
+</body>
+</html>
