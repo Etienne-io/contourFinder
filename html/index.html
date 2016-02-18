@@ -17,7 +17,7 @@
         var threshold = 160; //arcade
         threshold = 146 * 0.3 + 148 * 0.59 + 151 * 0.11;
         threshold += 0.2;
-        threshold = 160;
+        threshold = 50;
         console.log(threshold);
 
         var contourFinder = new ContourFinder();
@@ -36,6 +36,7 @@
         });
 
         function onClick(e) {
+            console.log(e);
             console.log(e.clientX, e.clientY);
             startTime = Date.now();
             contourFinder.findContours(image, foregroudColor, backgroundColor, threshold,e.clientX, e.clientY);
@@ -54,7 +55,8 @@
             logo = new Image();
             logo.onload = draw;
             //logo.src = "../images/image1bis.png";
-            logo.src = "../images/image2.png";
+            logo.src = "../images/cndg.png";
+            //logo.src = "../images/image2.png";
         }
 
         function draw() {
@@ -80,9 +82,14 @@
             for (var i = 0; i < points.length; i++) {
                 imageCtx.lineTo(points[i].x, points[i].y);
             }
-            imageCtx.stroke();
+            //imageCtx.stroke();
             imageCtx.closePath();
-            var points = contourFinder.contour;
+            //imageCtx.lineWidth = 5;
+            imageCtx.fillStyle = '#C51586';
+            imageCtx.fill();
+            imageCtx.strokeStyle = '#C51586';
+            imageCtx.stroke();
+            /*var points = contourFinder.contour;
             if (points.length <= 0) return;
 
             imageCtx.beginPath();
@@ -91,11 +98,12 @@
                 imageCtx.lineTo(points[i].x, points[i].y);
             }
             imageCtx.stroke();
-            imageCtx.closePath();
+            imageCtx.closePath();*/
         }
     </script>
 </head>
 <body>
-<canvas id="image" width="3310" height="2420"></canvas>
+<canvas id="image" width="3319" height="2730"></canvas>
+<!--<canvas id="image" width="3310" height="2420"></canvas>-->
 </body>
 </html>

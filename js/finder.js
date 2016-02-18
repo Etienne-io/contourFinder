@@ -12,7 +12,7 @@ function ContourFinder() {
     this.fColor; // foreground color
     this.bColor; // background color
     this.threshold;
-    this.maxContourPoints = 1000*10;
+    this.maxContourPoints = 1500*100;
     this.allContours = [];
 
     this.offset4 = function(x, y) { return (y * this.pixelsWidth + x) * 4; }
@@ -164,7 +164,7 @@ function ContourFinder() {
 
         this.contour = points;
         //this.closeContour(points);
-        var sol = this.getRandomPoint(points,3);
+        /*var sol = this.getRandomPoint(points,3);
         this.test = sol;
         console.log(globalLost(points,sol));
         var sol = this.lossOptimization(points, sol, [ 50, 25, 10, 5, 2, 1]);
@@ -175,7 +175,13 @@ function ContourFinder() {
         sol = this.lossOptimization(points, sol, [ 4, 3, 2, 1]);
         console.log(globalLost(points,sol));
         //sol = this.tryBalancing(points, sol);
-        console.log(globalLost(points,sol));
+        console.log(globalLost(points,sol));*/
+        //this.findCorners(points);
+        this.test = this.chenille(points);
+        this.test.push(this.test[0]);
+
+        console.log(this.test);
+
         return points;
     };
 
@@ -187,6 +193,111 @@ function ContourFinder() {
         Corners part
 
      */
+    this.chenille = function (points) {
+        var angles = [];
+
+        for (var i=0; i<points.length;i++) {
+            angles.push(this.angle(points[i%points.length],points[(i+4)%points.length],points[(i+12)%points.length]));
+        }
+
+        var res = [];
+
+        var auDessus = angles[0]>0.20?true:false;
+        var tmp = [];
+        var allTop = [];
+        for (var i=1; i<angles.length;i++) {
+            if (!auDessus){
+                if (angles[i]>0.40){
+                    tmp = [];
+                    tmp.push(i);
+                    auDessus = !auDessus;
+                }
+            }
+            if (auDessus){
+                if (angles[i]<0.30){
+                    tmp.push(i);
+                    allTop.push(tmp);
+                    auDessus = !auDessus;
+                }
+            }
+
+        }
+        _.forEach(allTop, function (indexes){
+            var max = angles[indexes[0]];
+            var index = 0;
+            for (var i=indexes[0];i<=indexes[1];i++){
+                var tmp = angles[i];
+                if (tmp>=max){
+                    max=tmp;
+                    index = i;
+                }
+            }
+            res.push(points[index+4]);
+        });
+
+        console.log(res);
+        return res;
+    };
+
+    this.angle = function (a, b , c) {
+
+        var ux= a.x- b.x,
+            uy= a.y- b.y,
+            vx= b.x - c.x,
+            vy= b.y - c.y
+
+        var normU = Math.sqrt(ux*ux + uy*uy),
+            normV = Math.sqrt(vx*vx + vy*vy);
+
+        var uDotV = ux*vx+uy*vy;
+
+
+        var cos = uDotV/(normU*normV);
+
+        return Math.acos(cos);
+    };
+
+
+
+
+
+
+
+
+    this.findCorners = function (points) {
+        points.pop();
+        var firstWall = this.getExtremities(points);
+        console.log('firstwall : ',firstWall);
+        //var solution = this.getRandomPoint(points, 3);
+        var solution = firstWall;
+        this.test = [];
+        var self=this;
+        _.forEach(solution, function (index) {
+            //console.log(index);
+            self.test.push(points[index]);
+
+        });
+        this.test.push(points[solution[0]]);
+        return solution;
+        /*solution = this.lossOptimization(points, solution, [ 50, 25, 10, 5, 2, 1]);
+        var lost = globalLost(points,solution);
+        console.log(lost);
+        var i = 1;
+        while (lost > 5 && i < 1) {
+            solution = this.addPointOnMaximumLostSegment(points, solution);
+            console.log(solution);
+            console.log(globalLost(points,solution));
+            solution = this.lossOptimization(points, solution, [ 50, 25, 10, 5, 2, 1]);
+            console.log(globalLost(points,solution));
+            solution = this.lossOptimization(points, solution, [ 4, 3, 2, 1]);
+            lost = globalLost(points,solution);
+            i+=1;
+            console.log(solution);
+            console.log(globalLost(points,solution));
+        }
+
+        return solution;*/
+    };
 
 
     this.getRandomPoint = function (points, nb) {
@@ -204,25 +315,26 @@ function ContourFinder() {
         var i=0;
         _.forEach(points, function (point) {
             // Left
-            if (!left || left.x > point.x) {
+            if (!left || (left.x >= point.x && left.y != point.y)) {
                 left = point;
                 iLeft = i;
             }
-            if (!right || right.x < point.x) {
+            else if (!right || (right.x < point.x && right.y != point.y)) {
                 right = point;
                 iRight = i;
             }
-            if (!top || top.y > point.y) {
+            else if (!top || (top.y > point.y && top.x != point.x)) {
                 top = point;
                 iTop = i;
             }
-            if (!bottom || bottom.y < point.y) {
+            else if (!bottom || (bottom.y < point.y && bottom.x != point.x)) {
                 bottom = point;
                 iBottom = i;
             }
             i++
         });
-        return points.length > 0?[iLeft,iTop,iRight]:[];
+        console.log(iLeft,iTop,iRight, iBottom);
+        return points.length > 0?[iLeft,iTop,iRight, iBottom]:[];
     };
 
     this.lossOptimization = function (points, solution, steps) {
@@ -245,7 +357,7 @@ function ContourFinder() {
             });
             this.test.push(points[solution[0]]);
             //console.log(this.test);
-        }while (k<10000)
+        }while (k<1000)
         return returnedSolution;
     };
 
@@ -412,18 +524,17 @@ function ContourFinder() {
     this.findFirstWall = function (points) {
         var permutations = [];
         for (var i=0;i<points.length;i++){
-            for (var j=i+1;j<points.length;j++){
+            for (var j=i+points.length/2;j<points.length;j++){
                 var a= i;
-                var b= j;
+                var b= Math.round(j);
                 permutations.push({a:a,b:b});
             }
         }
-        ////console.log(permutations);
-
         var min = lostFunction(points,permutations[0].a,permutations[0].b) || 1000;
         //console.log(min);
         var m = permutations[0];
         _.forEach(permutations, function (permutation) {
+
             var tmp = lostFunction(points, permutation.a, permutation.b)|| 1000;
 
             if (tmp/(permutation.b-permutation.a)<min/(m.b- m.a)) {
@@ -433,11 +544,10 @@ function ContourFinder() {
             }
         });
 
-
+        console.log(m);
         ////console.log('ok');
-        this.test = [points[m.a], points[m.b]];
-        //console.log(this.test);
-        this.nextWall(points, m.a, m.b);
+        return [m.a, m.b];
+
     }
 
     this.nextWall = function (points, solution, start, end) {
@@ -514,20 +624,46 @@ function ContourFinder() {
         var p2 = points[i2%points.length];
         var dx = (p2.x-p1.x);
         var dy = (p2.y-p1.y);
-        var a = dy/dx;
-        var b = p1.y - dy*p1.x/dx;
-        var returned = true;
         var cumulErreur = 0.0;
         var cpt = 0;
-        for (var i=i1+1;i!=i2;i=(i+1)%points.length){
-            var p3 = points[i%points.length];
-            var attendu = p3.y;
-            var eu = (dy* p3.x/dx + b);
-            cumulErreur += (eu - attendu)*(eu - attendu);
-            cpt = cpt+1;
+        if (dx === 0) {
+            for (var i=i1+1;i!=i2;i=(i+1)%points.length){
+                var p3 = points[i%points.length];
+                var attendu = p3.x;
+                var eu = p1.x;
+                cumulErreur += Math.abs(attendu - eu);
+                cpt = cpt+1;
+            }
+
         }
-        ////console.log('erreur moyenne : ', cumulErreur/cpt);
+        else if (dy===0) {
+            for (var i=i1+1;i!=i2;i=(i+1)%points.length){
+                var p3 = points[i%points.length];
+                var attendu = p3.y;
+                var eu = p1.y;
+                cumulErreur += Math.abs(attendu - eu);
+                cpt = cpt+1;
+
+            }
+        }
+        else {
+            var a = dy/dx;
+            var b = p1.y - dy*p1.x/dx;
+            var cumulErreur = 0.0;
+            var cpt = 0;
+            for (var i=i1+1;i!=i2;i=(i+1)%points.length){
+                var p3 = points[i%points.length];
+                var attendu = p3.y;
+                var eu = (dy* p3.x/dx + b);
+                cumulErreur += (eu - attendu)*(eu - attendu);
+                cpt = cpt+1;
+            }
+            ////console.log('erreur moyenne : ', cumulErreur/cpt);
+
+
+        }
         return cumulErreur/cpt;
+
 
     }
 
