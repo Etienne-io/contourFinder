@@ -197,24 +197,25 @@ function ContourFinder() {
         var angles = [];
 
         for (var i=0; i<points.length;i++) {
-            angles.push(this.angle(points[i%points.length],points[(i+4)%points.length],points[(i+12)%points.length]));
+            var angle = this.angle(points[i%points.length],points[(i+6)%points.length],points[(i+12)%points.length]);
+            angles.push(angle);
         }
 
         var res = [];
 
-        var auDessus = angles[0]>0.20?true:false;
+        var auDessus = angles[0]>0.60?true:false;
         var tmp = [];
         var allTop = [];
         for (var i=1; i<angles.length;i++) {
             if (!auDessus){
-                if (angles[i]>0.40){
+                if (angles[i]>0.60){
                     tmp = [];
                     tmp.push(i);
                     auDessus = !auDessus;
                 }
             }
             if (auDessus){
-                if (angles[i]<0.30){
+                if (angles[i]<0.60){
                     tmp.push(i);
                     allTop.push(tmp);
                     auDessus = !auDessus;
@@ -232,7 +233,7 @@ function ContourFinder() {
                     index = i;
                 }
             }
-            res.push(points[index+4]);
+            res.push(points[index+6]);
         });
 
         console.log(res);
@@ -254,6 +255,11 @@ function ContourFinder() {
 
         var cos = uDotV/(normU*normV);
 
+        console.log(ux, uy, vx, vy, Math.acos(cos) || 0);
+
+        if (ux===vx && uy===vy) {
+            return 0;
+        }
         return Math.acos(cos);
     };
 
